@@ -59,21 +59,32 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
-      - name: Deploy frontend to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.FRONTEND_EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.FRONTEND_SSH_KEY }}
-          source: "frontend/build/"
-          target: "/var/www/html/"
-          strip_components: 2
-
-      - name: Restart frontend services
+      - name: Clean old frontend files
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.FRONTEND_EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.FRONTEND_SSH_KEY }}
           script: |
+            sudo rm -rf /var/www/html/*
+
+      - name: Deploy frontend to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.FRONTEND_EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.FRONTEND_SSH_KEY }}
+          source: "frontend/build/*"
+          target: "/tmp/frontend-build/"
+          strip_components: 2
+
+      - name: Move files and restart services
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.FRONTEND_EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.FRONTEND_SSH_KEY }}
+          script: |
+            sudo mv /tmp/frontend-build/* /var/www/html/
+            sudo chown -R www-data:www-data /var/www/html/
             sudo systemctl restart nginx
