@@ -7,7 +7,7 @@ const taskRoute = require("./routes/task")
 
 // CHANGE URL TO localhost or Your network url
 // if localhost not works then change it to 127.0.0.1
-const serverUrl = "192.168.1.22"
+const serverUrl = "localhost"
 
 mongoose.connect("mongodb://localhost:27017/tasklist")
     .then(() => console.log("Database connection successed!"))

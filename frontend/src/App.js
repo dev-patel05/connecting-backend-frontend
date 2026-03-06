@@ -3,7 +3,7 @@ import React, {Component} from 'react';
 import axios from 'axios'
 
 // CHANGE TO YOUR BACKEND URL
-const backendUrl = "http://192.168.1.22:8080/api/"
+const backendUrl = "http://3.109.201.164/api/"
 
 // BASE URL (backend)
 const api = axios.create({
@@ -63,7 +63,7 @@ class App extends Component{
               <label>Task title</label>
               <input type="text" id="title" name="taskTitle" placeholder="Task title..."/>
 
-              <label>Task text</label>
+              <label> text</label>
               <input type="text" id="text" name="taskText" placeholder="Task text..."/>
             
               <input type="submit" value="Add Task"/>
