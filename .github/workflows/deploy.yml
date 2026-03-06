@@ -1,0 +1,79 @@
+# Auto-generated CI/CD pipeline for fullstack deployment
+name: Deploy Frontend & Backend to EC2
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm install
+
+      - name: Deploy backend to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.BACKEND_EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.BACKEND_SSH_KEY }}
+          source: "backend/"
+          target: "/app/"
+          strip_components: 0
+
+      - name: Restart backend services
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.BACKEND_EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.BACKEND_SSH_KEY }}
+          script: |
+            cd /app/backend && npm install --production
+            pm2 restart app-backend || pm2 start index.js --name app-backend
+            sudo systemctl restart nginx
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Deploy frontend to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.FRONTEND_EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.FRONTEND_SSH_KEY }}
+          source: "frontend/build/"
+          target: "/var/www/html/"
+          strip_components: 2
+
+      - name: Restart frontend services
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.FRONTEND_EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.FRONTEND_SSH_KEY }}
+          script: |
+            sudo systemctl restart nginx
